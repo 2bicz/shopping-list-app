@@ -1,0 +1,55 @@
+services:
+
+  postgres:
+    image: 'postgres:latest'
+    container_name: 'postgres'
+    environment:
+      - 'POSTGRES_DB=shopping-list-db'
+      - 'POSTGRES_PASSWORD=QfHD6qPLkFUU'
+      - 'POSTGRES_USER=root'
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    networks:
+      - 'backend_db'
+
+  backend:
+    image: 'shopping-list:latest'
+    build:
+      context: './shopping-list-backend'
+    container_name: 'backend'
+    depends_on:
+      - 'postgres'
+    environment:
+      - 'SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/shopping-list-db'
+      - 'SPRING_DATASOURCE_USERNAME=root'
+      - 'SPRING_DATASOURCE_PASSWORD=QfHD6qPLkFUU'
+      - 'SPRING_JPA_HIBERNATE_DDL_AUTO=update'
+    ports:
+        - '8080:8080'
+    networks:
+        - 'backend_db'
+        - 'frontend_backend'
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./shopping-list-frontend/Dockerfile
+    container_name: 'frontend'
+    ports:
+      - '5173:5173'
+    depends_on:
+      - 'backend'
+    networks:
+      - 'frontend_backend'
+
+networks:
+  backend_db:
+    driver: 'bridge'
+  frontend_backend:
+    driver: 'bridge'
+
+volumes:
+  postgres_data:
+    external: false
